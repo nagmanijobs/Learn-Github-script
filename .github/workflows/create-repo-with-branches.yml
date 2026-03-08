@@ -1,0 +1,46 @@
+name: Create Repository with Branches
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo_name:
+        description: Repository name to create
+        required: true
+        type: string
+      owner:
+        description: Owner or organization (optional, defaults to authenticated user)
+        required: false
+        type: string
+      visibility:
+        description: Repository visibility
+        required: true
+        default: public
+        type: choice
+        options:
+          - public
+          - private
+
+jobs:
+  create-repository:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure git identity
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create repository and branches
+        env:
+          GH_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
+        run: |
+          if [ -z "${GH_TOKEN}" ]; then
+            echo "Missing required secret: GH_ADMIN_TOKEN"
+            exit 1
+          fi
+
+          ./.github/scripts/create-repo-with-branches.sh "${{ inputs.repo_name }}" "${{ inputs.owner }}" "${{ inputs.visibility }}"
