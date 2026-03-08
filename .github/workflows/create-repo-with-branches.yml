@@ -41,14 +41,13 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: ${{ inputs.owner || github.repository_owner }}
 
       - name: Create repository and branches
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           if [ -z "${GH_TOKEN}" ]; then
-            echo "Failed to generate GitHub App token. Check APP_ID and APP_PRIVATE_KEY secrets."
+            echo "Failed to generate GitHub App token. Ensure the app is installed on this repository and APP_ID/APP_PRIVATE_KEY are correct."
             exit 1
           fi
 
