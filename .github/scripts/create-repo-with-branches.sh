@@ -7,7 +7,7 @@ if ! command -v gh >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! gh auth status >/dev/null 2>&1; then
+if [[ -z "${GH_TOKEN:-}" ]] && ! gh auth status >/dev/null 2>&1; then
   echo "Error: You are not authenticated in GitHub CLI. Run: gh auth login"
   exit 1
 fi
