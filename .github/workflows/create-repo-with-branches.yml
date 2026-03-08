@@ -35,12 +35,20 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ inputs.owner || github.repository_owner }}
+
       - name: Create repository and branches
         env:
-          GH_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           if [ -z "${GH_TOKEN}" ]; then
-            echo "Missing required secret: GH_ADMIN_TOKEN"
+            echo "Failed to generate GitHub App token. Check APP_ID and APP_PRIVATE_KEY secrets."
             exit 1
           fi
 
