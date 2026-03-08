@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 
 set -euo pipefail
 
@@ -31,8 +31,14 @@ MAIN_BRANCH="main"
 DEVELOPMENT_BRANCH="developement"
 RELEASE_BRANCH="release"
 
+# Configure git credentials if GH_TOKEN is available (for GitHub Actions)
+if [[ -n "${GH_TOKEN:-}" ]]; then
+  git config --global credential.helper store
+  echo "https://oauth2:${GH_TOKEN}@github.com" > ~/.git-credentials
+fi
+
 WORK_DIR=$(mktemp -d)
-trap 'rm -rf "$WORK_DIR"' EXIT
+trap 'rm -rf "$WORK_DIR" ~/.git-credentials 2>/dev/null || true' EXIT
 
 pushd "$WORK_DIR" >/dev/null
 
@@ -44,6 +50,8 @@ fi
 
 git init
 echo "# $REPO_NAME" > README.md
+git config user.name "github-actions[bot]"
+git config user.email "github-actions[bot]@users.noreply.github.com"
 git add README.md
 git commit -m "chore: initial commit"
 git branch -M "$MAIN_BRANCH"
