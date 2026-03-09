@@ -42,10 +42,28 @@ trap 'rm -rf "$WORK_DIR" ~/.git-credentials 2>/dev/null || true' EXIT
 
 pushd "$WORK_DIR" >/dev/null
 
+PRIVATE_FLAG="false"
 if [[ "$VISIBILITY" == "private" ]]; then
-  gh repo create "$OWNER/$REPO_NAME" --private --confirm
+  PRIVATE_FLAG="true"
+fi
+
+OWNER_TYPE="$(gh api "users/$OWNER" --jq .type 2>/dev/null || true)"
+
+if [[ "$OWNER_TYPE" == "Organization" ]]; then
+  if ! CREATE_OUTPUT=$(gh api --method POST "orgs/$OWNER/repos" -f name="$REPO_NAME" -F private="$PRIVATE_FLAG" 2>&1); then
+    echo "$CREATE_OUTPUT"
+    echo "Repository creation failed for organization '$OWNER'. Ensure the GitHub App has Administration (Read/Write) and Contents (Read/Write) permissions and is installed for this org."
+    exit 1
+  fi
+elif [[ "$OWNER_TYPE" == "User" ]]; then
+  if ! CREATE_OUTPUT=$(gh api --method POST "user/repos" -f name="$REPO_NAME" -F private="$PRIVATE_FLAG" 2>&1); then
+    echo "$CREATE_OUTPUT"
+    echo "Repository creation failed for personal account '$OWNER'. GitHub App installation tokens may not be allowed to create user repositories; use an org owner or a PAT/user token for user-owned repo creation."
+    exit 1
+  fi
 else
-  gh repo create "$OWNER/$REPO_NAME" --public --confirm
+  echo "Error: Could not determine whether owner '$OWNER' is a User or Organization."
+  exit 1
 fi
 
 git init
